@@ -1,0 +1,36 @@
+if [[ $1 == "clear" ]]; then
+  rm -r $KUBESWITCH_CACHE_DIR
+  return
+fi
+
+if [[ $1 == "exit" ]]; then
+  unset KUBECONFIG
+  return
+fi
+
+local ctx=$1
+local namespace=$2
+local file="$KUBESWITCH_CACHE_DIR/profiles/$ctx.$namespace"
+
+if [[ -f "$file" ]]; then
+  export KUBECONFIG="$file"
+else
+  # verify that the context and namespace exist
+  if ! __kubeswitch_list_contexts | grep -q $ctx; then
+    echo "Context $ctx not found" >&2
+    return 1
+  fi
+  if ! __kubeswitch_list_namespaces $ctx | grep -q $namespace; then
+    echo "Namespace $namespace not found in context $ctx" >&2
+    return 1
+  fi
+
+  # generate the profile
+  mkdir -p $KUBESWITCH_CACHE_DIR/profiles
+  cat $HOME/.kube/config > $file
+  export KUBECONFIG="$file"
+  kubectl config use-context $ctx
+  kubectl config set-context --current --namespace=$namespace
+fi
+
+echo "Using context/namespace: $ctx/$namespace"

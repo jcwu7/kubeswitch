@@ -1,0 +1,14 @@
+#compdef kubeswitch
+
+local -a options
+
+if [[ $CURRENT -eq 2 ]]; then
+  options=(${(f)"$(__kubeswitch_list_contexts)"})
+  _describe 'command' options
+fi
+
+if [[ $CURRENT -eq 3 ]]; then
+  local context=$words[2]
+  options=(${(f)"$(__kubeswitch_list_namespaces $context)"})
+  _describe 'command' options
+fi
